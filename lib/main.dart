@@ -20,6 +20,8 @@ import 'package:saber/data/file_manager/file_manager.dart';
 import 'package:saber/data/flavor_config.dart';
 import 'package:saber/data/nextcloud/nc_http_overrides.dart';
 import 'package:saber/data/nextcloud/saber_syncer.dart';
+import 'package:saber/data/googledrive/drive_client.dart';
+import 'package:saber/data/googledrive/drive_syncer.dart';
 import 'package:saber/data/prefs.dart';
 import 'package:saber/data/routes.dart';
 import 'package:saber/data/sentry/sentry_init.dart';
@@ -119,6 +121,15 @@ Future<void> appRunner(List<String> args) async {
   runApp(SentryWidget(child: TranslationProvider(child: const App())));
   startSyncAfterLoaded();
   setupBackgroundSync();
+  startDriveSyncAfterLoaded();
+}
+
+void startDriveSyncAfterLoaded() async {
+  final email = await DriveClient.restoreSession();
+  if (email == null) return;
+  stows.driveLoggedIn = true;
+  stows.driveEmail.value = email;
+  await DriveSyncer.sync();
 }
 
 void startSyncAfterLoaded() async {

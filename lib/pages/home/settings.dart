@@ -10,6 +10,10 @@ import 'package:material_symbols_icons/symbols.dart';
 import 'package:saber/components/navbar/responsive_navbar.dart';
 import 'package:saber/components/settings/app_info.dart';
 import 'package:saber/components/settings/nextcloud_profile.dart';
+import 'package:saber/data/googledrive/drive_client.dart';
+import 'package:saber/data/googledrive/drive_syncer.dart';
+import 'package:saber/data/prefs.dart';
+import 'package:saber/pages/user/drive_login.dart';
 import 'package:saber/components/settings/settings_button.dart';
 import 'package:saber/components/settings/settings_color.dart';
 import 'package:saber/components/settings/settings_directory_selector.dart';
@@ -193,6 +197,7 @@ class _SettingsPageState extends State<SettingsPage> {
             sliver: SliverList.list(
               children: [
                 const NextcloudProfile(),
+                const _DriveProfileTile(),
                 const Padding(padding: .all(8), child: AppInfo()),
                 SettingsSubtitle(subtitle: t.settings.prefCategories.general),
                 SettingsDropdown(
@@ -630,5 +635,73 @@ class _SettingsPageState extends State<SettingsPage> {
     stows.locale.removeListener(onChanged);
     UpdateManager.status.removeListener(onChanged);
     super.dispose();
+  }
+}
+
+class _DriveProfileTile extends StatefulWidget {
+  const _DriveProfileTile();
+
+  @override
+  State<_DriveProfileTile> createState() => _DriveProfileTileState();
+}
+
+class _DriveProfileTileState extends State<_DriveProfileTile> {
+  @override
+  Widget build(BuildContext context) {
+    final loggedIn = stows.driveLoggedIn;
+    final email = stows.driveEmail.value;
+
+    return ListTile(
+      leading: const Icon(Icons.cloud_outlined),
+      title: Text(loggedIn ? email : 'Google Drive'),
+      subtitle: Text(loggedIn ? 'Tap to sync or disconnect' : 'Not connected'),
+      trailing: loggedIn
+          ? IconButton(
+              icon: const Icon(Icons.sync),
+              tooltip: 'Sync now',
+              onPressed: () => DriveSyncer.sync(),
+            )
+          : null,
+      onTap: loggedIn
+          ? () => _showDriveOptions(context)
+          : () async {
+              await Navigator.of(
+                context,
+              ).push(MaterialPageRoute(builder: (_) => const DriveLoginPage()));
+              setState(() {});
+            },
+    );
+  }
+
+  void _showDriveOptions(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      builder: (context) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: const Icon(Icons.sync),
+              title: const Text('Sync now'),
+              onTap: () {
+                Navigator.pop(context);
+                DriveSyncer.sync();
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.logout),
+              title: const Text('Disconnect Google Drive'),
+              onTap: () async {
+                Navigator.pop(context);
+                await DriveClient.signOut();
+                stows.driveLoggedIn = false;
+                stows.driveEmail.value = '';
+                if (mounted) setState(() {});
+              },
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }

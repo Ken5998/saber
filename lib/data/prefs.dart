@@ -75,6 +75,17 @@ class Stows {
       ncPassword.value.isNotEmpty &&
       encPassword.value.isNotEmpty;
 
+  /// Google Drive
+  final driveEmail = PlainStow('driveEmail', '', volatile: !_isOnMainIsolate);
+  final driveLoggedInStow = PlainStow(
+    'driveLoggedIn',
+    false,
+    volatile: !_isOnMainIsolate,
+  );
+  bool get driveLoggedIn => driveLoggedInStow.value;
+  set driveLoggedIn(bool value) => driveLoggedInStow.value = value;
+  bool get anyLoggedIn => loggedIn || driveLoggedIn;
+
   final key = SecureStow('key', '', volatile: !_isOnMainIsolate);
   final iv = SecureStow('iv', '', volatile: !_isOnMainIsolate);
 

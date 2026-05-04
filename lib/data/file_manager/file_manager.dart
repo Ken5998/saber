@@ -12,6 +12,7 @@ import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:saber/data/nextcloud/saber_syncer.dart';
+import 'package:saber/data/googledrive/drive_syncer.dart';
 import 'package:saber/data/prefs.dart';
 import 'package:saber/i18n/strings.g.dart';
 import 'package:saber/pages/editor/editor.dart';
@@ -263,6 +264,7 @@ class FileManager {
     void afterWrite() {
       broadcastFileWrite(FileOperationType.write, filePath);
       if (alsoUpload) syncer.uploader.enqueueRel(filePath);
+      if (alsoUpload) DriveUploadQueue.enqueue(filePath);
       if (filePath.endsWith(Editor.extension)) {
         _removeReferences(
           '${filePath.substring(0, filePath.length - Editor.extension.length)}'
@@ -406,6 +408,8 @@ class FileManager {
 
     syncer.uploader.enqueueRel(fromPath);
     syncer.uploader.enqueueRel(toPath);
+    DriveUploadQueue.enqueue(fromPath);
+    DriveUploadQueue.enqueue(toPath);
 
     _renameReferences(fromPath, toPath);
     broadcastFileWrite(FileOperationType.delete, fromPath);
@@ -454,6 +458,7 @@ class FileManager {
     await file.delete();
 
     if (alsoUpload) syncer.uploader.enqueueRel(filePath);
+    if (alsoUpload) DriveUploadQueue.enqueue(filePath);
 
     _removeReferences(filePath);
     broadcastFileWrite(FileOperationType.delete, filePath);
