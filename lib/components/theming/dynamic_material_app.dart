@@ -14,6 +14,7 @@ import 'package:saber/data/prefs.dart';
 import 'package:saber/i18n/extensions/redirecting_localization_delegate.dart';
 import 'package:saber/i18n/strings.g.dart';
 import 'package:window_manager/window_manager.dart';
+import 'package:saber/main.dart' show scaffoldMessengerKey;
 
 class DynamicMaterialApp extends StatefulHookWidget {
   const DynamicMaterialApp({
@@ -199,6 +200,7 @@ class ExplicitlyThemedApp extends StatelessWidget {
 
     return MaterialApp.router(
       key: _materialAppKey,
+      scaffoldMessengerKey: scaffoldMessengerKey,
       title: title,
       routeInformationProvider: router.routeInformationProvider,
       routeInformationParser: router.routeInformationParser,

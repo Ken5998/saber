@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:saber/components/theming/adaptive_icon.dart';
 import 'package:saber/data/nextcloud/saber_syncer.dart';
+import 'package:saber/data/googledrive/drive_syncer.dart';
 import 'package:saber/data/prefs.dart';
 
 class SyncingButton extends HookWidget {
@@ -52,6 +53,9 @@ class SyncingButton extends HookWidget {
       filesTransferred.value = 0;
     });
 
+    // Listen to Drive sync status changes to rebuild
+    useListenable(DriveSyncState.status);
+
     final percentage = getPercentage();
 
     return IconButton(
@@ -86,6 +90,9 @@ class SyncingButton extends HookWidget {
               ),
             ),
           ),
+          // Drive sync status indicator
+          if (stows.driveLoggedIn)
+            Positioned(right: 0, bottom: 0, child: _DriveStatusDot()),
         ],
       ),
     );
@@ -129,6 +136,33 @@ class _AnimatedCircularProgressIndicatorState
     return CircularProgressIndicator(
       semanticsLabel: 'Syncing progress',
       value: percentage,
+    );
+  }
+}
+
+class _DriveStatusDot extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return ValueListenableBuilder<DriveSyncStatus>(
+      valueListenable: DriveSyncState.status,
+      builder: (context, status, _) {
+        final color = switch (status) {
+          DriveSyncStatus.syncing => Colors.blue,
+          DriveSyncStatus.done => Colors.green,
+          DriveSyncStatus.error => Colors.red,
+          DriveSyncStatus.idle => Colors.grey.shade400,
+        };
+        return AnimatedContainer(
+          duration: const Duration(milliseconds: 300),
+          width: 8,
+          height: 8,
+          decoration: BoxDecoration(
+            color: color,
+            shape: BoxShape.circle,
+            border: Border.all(color: Colors.white, width: 1.5),
+          ),
+        );
+      },
     );
   }
 }

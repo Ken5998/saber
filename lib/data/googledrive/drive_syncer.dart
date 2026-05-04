@@ -2,14 +2,34 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
 import 'package:googleapis/drive/v3.dart' as drive;
 import 'package:logging/logging.dart';
 import 'package:saber/data/file_manager/file_manager.dart';
 import 'package:saber/data/googledrive/drive_client.dart';
 import 'package:saber/data/prefs.dart';
 import 'package:saber/pages/editor/editor.dart';
+import 'package:saber/main.dart' show scaffoldMessengerKey;
 
 final log = Logger('DriveSyncer');
+
+/// Stato corrente del sync Drive — osservabile dalla UI
+enum DriveSyncStatus { idle, syncing, done, error }
+
+class DriveSyncState {
+  static final status = ValueNotifier<DriveSyncStatus>(DriveSyncStatus.idle);
+  static final lastSync = ValueNotifier<DateTime?>(null);
+  static final lastError = ValueNotifier<String?>(null);
+
+  static void _set(DriveSyncStatus s, {String? error}) {
+    status.value = s;
+    if (error != null) lastError.value = error;
+    if (s == DriveSyncStatus.done) {
+      lastSync.value = DateTime.now();
+      lastError.value = null;
+    }
+  }
+}
 
 /// Syncs local files to/from Google Drive.
 ///
@@ -27,10 +47,12 @@ class DriveSyncer {
   static Future<void> sync() async {
     if (_running) return;
     _running = true;
+    DriveSyncState._set(DriveSyncStatus.syncing);
     try {
       final api = await DriveClient.getDriveApi();
       if (api == null) {
         log.info('sync: not logged in, skipping');
+        DriveSyncState._set(DriveSyncStatus.idle);
         return;
       }
       log.info('sync: starting');
@@ -39,8 +61,10 @@ class DriveSyncer {
         _downloadRemoteChanges(api),
       ]);
       log.info('sync: done');
+      DriveSyncState._set(DriveSyncStatus.done);
     } catch (e, st) {
       log.severe('sync: error: $e', e, st);
+      DriveSyncState._set(DriveSyncStatus.error, error: e.toString());
     } finally {
       _running = false;
     }
@@ -98,10 +122,12 @@ class DriveSyncer {
       // Check if local is newer before uploading
       final remoteFile = await _getRemoteFileMeta(api, remoteId);
       final remoteModified = remoteFile?.modifiedTime;
-      if (remoteModified != null &&
-          remoteModified.isAfter(lastModified) &&
-          remoteModified.difference(lastModified).abs() >
-              const Duration(milliseconds: 500)) {
+      final lastModifiedUtc = lastModified.toUtc();
+      final remoteModifiedUtc = remoteModified?.toUtc();
+      if (remoteModifiedUtc != null &&
+          remoteModifiedUtc.isAfter(lastModifiedUtc) &&
+          remoteModifiedUtc.difference(lastModifiedUtc).abs() >
+              const Duration(seconds: 5)) {
         log.fine('skipping upload (remote newer): $relativePath');
         return;
       }
@@ -114,6 +140,9 @@ class DriveSyncer {
 
   static Future<void> _downloadRemoteChanges(drive.DriveApi api) async {
     final remoteFiles = await _listRemoteFiles(api);
+    log.info(
+      '_downloadRemoteChanges: found ${remoteFiles.length} remote files',
+    );
 
     for (final remoteFile in remoteFiles) {
       final relativePath = remoteFile.appProperties?['path'];
@@ -138,12 +167,19 @@ class DriveSyncer {
   ) async {
     final localFile = FileManager.getFile(relativePath);
     final remoteModified = remoteFile.modifiedTime;
+    log.info(
+      '_downloadFileIfNewer: $relativePath'
+      ' remote=${remoteModified?.toUtc()}'
+      ' local=${localFile.existsSync() ? localFile.lastModifiedSync().toUtc() : "missing"}',
+    );
 
     if (remoteModified != null && localFile.existsSync()) {
-      final localModified = localFile.lastModifiedSync();
-      final diff = remoteModified.difference(localModified);
-      if (diff.abs() < const Duration(milliseconds: 500)) return;
-      if (localModified.isAfter(remoteModified)) {
+      // Confronta sempre in UTC per evitare problemi di timezone
+      final localModified = localFile.lastModifiedSync().toUtc();
+      final remoteModifiedUtc = remoteModified.toUtc();
+      final diff = remoteModifiedUtc.difference(localModified);
+      if (diff.abs() < const Duration(seconds: 5)) return;
+      if (localModified.isAfter(remoteModifiedUtc)) {
         log.fine('skipping download (local newer): $relativePath');
         return;
       }
@@ -163,9 +199,10 @@ class DriveSyncer {
       bytes,
       alsoUpload: false,
       awaitWrite: true,
-      lastModified: remoteModified,
+      lastModified: remoteModified?.toUtc(),
     );
     log.fine('downloaded: $relativePath');
+    _notifyFileUpdated(relativePath);
   }
 
   // ─── Delete ────────────────────────────────────────────────────────────────
@@ -239,6 +276,29 @@ class DriveSyncer {
       chunks.addAll(chunk);
     }
     return Uint8List.fromList(chunks);
+  }
+
+  /// Shows a SnackBar when a note is updated from Drive.
+  static void _notifyFileUpdated(String relativePath) {
+    // Only notify for main note files, not previews or assets
+    if (!relativePath.endsWith('.sbn2')) return;
+    if (relativePath.endsWith('.sbn2.p')) return;
+
+    // Get a friendly name from the path
+    final name = relativePath.split('/').last.replaceAll('.sbn2', '');
+
+    scaffoldMessengerKey.currentState?.showSnackBar(
+      SnackBar(
+        content: Text('Updated: $name'),
+        duration: const Duration(seconds: 3),
+        behavior: SnackBarBehavior.floating,
+        action: SnackBarAction(
+          label: 'OK',
+          onPressed: () =>
+              scaffoldMessengerKey.currentState?.hideCurrentSnackBar(),
+        ),
+      ),
+    );
   }
 }
 

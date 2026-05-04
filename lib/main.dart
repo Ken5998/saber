@@ -35,6 +35,7 @@ import 'package:window_manager/window_manager.dart';
 import 'package:worker_manager/worker_manager.dart';
 import 'package:workmanager/workmanager.dart';
 
+final scaffoldMessengerKey = GlobalKey<ScaffoldMessengerState>();
 Future<void> main(List<String> args) async {
   /// To set the flavor config e.g. for the Play Store, use:
   /// flutter build \
@@ -130,6 +131,15 @@ void startDriveSyncAfterLoaded() async {
   stows.driveLoggedIn = true;
   stows.driveEmail.value = email;
   await DriveSyncer.sync();
+  _startDrivePeriodicSync();
+}
+
+Timer? _driveSyncTimer;
+void _startDrivePeriodicSync() {
+  _driveSyncTimer?.cancel();
+  _driveSyncTimer = Timer.periodic(const Duration(minutes: 5), (_) {
+    if (stows.driveLoggedIn) DriveSyncer.sync();
+  });
 }
 
 void startSyncAfterLoaded() async {
