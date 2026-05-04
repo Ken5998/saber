@@ -179,10 +179,10 @@ class EditorState extends State<Editor> {
   @override
   void initState() {
     DynamicMaterialApp.addFullscreenListener(_setState);
-
     _initAsync();
     _assignKeybindings();
 
+    /// HardwareKeyboard.instance.addHandler(_handleStylusKeyEvent);
     super.initState();
   }
 
@@ -259,7 +259,17 @@ class EditorState extends State<Editor> {
   void _setState() => setState(() {});
 
   Keybinding? _ctrlZ, _ctrlY, _ctrlShiftZ;
+  static const _stylusChannel = MethodChannel(
+    'com.adilhanney.saber/stylus_buttons',
+  );
+
   void _assignKeybindings() {
+    _stylusChannel.setMethodCallHandler((call) async {
+      if (call.method == 'stylusButton') {
+        final int button = call.arguments as int;
+        _handleStylusButton(button);
+      }
+    });
     _ctrlZ = Keybinding([
       KeyCode.ctrl,
       KeyCode.from(LogicalKeyboardKey.keyZ),
@@ -282,6 +292,37 @@ class EditorState extends State<Editor> {
     if (_ctrlZ != null) Keybinder.remove(_ctrlZ!);
     if (_ctrlY != null) Keybinder.remove(_ctrlY!);
     if (_ctrlShiftZ != null) Keybinder.remove(_ctrlShiftZ!);
+  }
+
+  /// Handles Redmi Smart Pen side buttons:
+  /// PAGE_DOWN = toggle eraser
+  /// PAGE_UP   = toggle selection
+  void _handleStylusButton(int button) {
+    if (button == 1) {
+      // Pulsante 1 (PAGE_DOWN) → toggle gomma
+      if (currentTool is Eraser) {
+        if (tmpTool != null) {
+          currentTool = tmpTool!;
+          tmpTool = null;
+        }
+      } else {
+        tmpTool = currentTool;
+        currentTool = Eraser();
+      }
+      setState(() {});
+    } else if (button == 2) {
+      // Pulsante 2 (PAGE_UP) → toggle selezione
+      if (currentTool is Select) {
+        if (tmpTool != null) {
+          currentTool = tmpTool!;
+          tmpTool = null;
+        }
+      } else {
+        tmpTool = currentTool;
+        currentTool = Select.currentSelect;
+      }
+      setState(() {});
+    }
   }
 
   /// Creates pages until the given page index exists,
@@ -752,23 +793,32 @@ class EditorState extends State<Editor> {
     isHovering = false;
   }
 
-  void onStylusButtonChanged(bool buttonPressed) {
-    // whether the stylus button is or was pressed
-    stylusButtonPressed = stylusButtonPressed || buttonPressed;
+  void onStylusButtonChanged(int button) {
+    // button: 0=nessuno, 1=primario→gomma, 2=secondario→selezione
+    stylusButtonPressed = stylusButtonPressed || button != 0;
 
-    if (isHovering) {
-      if (buttonPressed) {
-        if (currentTool is Eraser) return;
-        tmpTool = currentTool;
-        currentTool = Eraser();
-        setState(() {});
-      } else {
-        if (tmpTool != null && currentTool is Eraser) {
+    if (button == 1) {
+      if (currentTool is Eraser) {
+        if (tmpTool != null) {
           currentTool = tmpTool!;
           tmpTool = null;
-          setState(() {});
         }
+      } else {
+        tmpTool = currentTool;
+        currentTool = Eraser();
       }
+      setState(() {});
+    } else if (button == 2) {
+      if (currentTool is Select) {
+        if (tmpTool != null) {
+          currentTool = tmpTool!;
+          tmpTool = null;
+        }
+      } else {
+        tmpTool = currentTool;
+        currentTool = Select.currentSelect;
+      }
+      setState(() {});
     }
   }
 
@@ -2083,6 +2133,8 @@ class EditorState extends State<Editor> {
     _lastSeenPointerCountTimer?.cancel();
 
     _removeKeybindings();
+
+    /// HardwareKeyboard.instance.removeHandler(_handleStylusKeyEvent);
 
     // manually save pen properties since the listeners don't fire if a property is changed
     stows.lastFountainPenOptions.notifyListeners();

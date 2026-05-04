@@ -53,7 +53,11 @@ class CanvasGestureDetector extends StatefulWidget {
   updatePointerData;
   final VoidCallback onHovering;
   final VoidCallback onHoveringEnd;
-  final ValueChanged<bool> onStylusButtonChanged;
+
+  /// 0 = nessun pulsante, 1 = pulsante primario (gomma), 2 = secondario (selezione)
+  final ValueChanged<int> onStylusButtonChanged;
+
+  ///final ValueChanged<bool> onStylusButtonChanged;
 
   final VoidCallback undo;
   final VoidCallback redo;
@@ -443,28 +447,32 @@ class CanvasGestureDetectorState extends State<CanvasGestureDetector> {
     }
   }
 
-  var stylusButtonWasPressed = false;
-
+  var _lastStylusButton = 0;
   void _listenerPointerHoverEvent(PointerEvent event) {
     if (event.kind != PointerDeviceKind.stylus) return;
-
-    // Apparently flutter synthesizes a hover event on pointer down,
-    // so these are used to detect when hovering ends
     if (event.synthesized) {
       widget.onHoveringEnd();
     } else {
       widget.onHovering();
-      if (stylusButtonWasPressed != (event.buttons == kPrimaryStylusButton)) {
-        stylusButtonWasPressed = event.buttons == kPrimaryStylusButton;
-        widget.onStylusButtonChanged(stylusButtonWasPressed);
+      final int currentButton;
+      if (event.buttons & kSecondaryStylusButton != 0) {
+        currentButton = 2;
+      } else if (event.buttons & kPrimaryStylusButton != 0) {
+        currentButton = 1;
+      } else {
+        currentButton = 0;
+      }
+      if (_lastStylusButton != currentButton) {
+        _lastStylusButton = currentButton;
+        widget.onStylusButtonChanged(currentButton);
       }
     }
   }
 
   void _listenerPointerUpEvent(PointerEvent event) {
     widget.updatePointerData(event.kind, null);
-    stylusButtonWasPressed = false;
-    widget.onStylusButtonChanged(false);
+    _lastStylusButton = 0;
+    widget.onStylusButtonChanged(0);
   }
 
   @override
