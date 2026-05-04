@@ -1,138 +1,177 @@
-# <img src="https://github.com/saber-notes/saber/raw/main/assets/icon/icon.png" width="30" height="30" alt="Logo"> Saber
+# Saber — Fork personale
 
-[<img src='https://github.com/saber-notes/saber/blob/main/assets_raw/badges/google-play-badge.svg'
-    alt='Get it on Google Play'
-    height=50>][google_play]
-&nbsp;
-[<img src="https://github.com/saber-notes/saber/blob/main/assets_raw/badges/f-droid-badge.svg"
-    alt="Get it on F-Droid"
-    height=50>][f-droid]
-&nbsp;
-[<img src="https://github.com/saber-notes/saber/blob/main/assets_raw/badges/app-store-badge.svg"
-    alt="Download on the App Store"
-    height=50>][app_store]
-&nbsp;
-[<img src="https://github.com/saber-notes/saber/blob/main/assets_raw/badges/windows-badge.png"
-    alt="Download for Windows"
-    height=50>][download_windows]
-&nbsp;
-[<img src="https://github.com/saber-notes/saber/blob/main/assets_raw/badges/flathub-badge.svg"
-    alt="Download on Flathub"
-    height=50>][flathub]
-&nbsp;
-[<img src="https://github.com/saber-notes/saber/blob/main/assets_raw/badges/appimage-logo.svg"
-    alt="Get it as an AppImage"
-    height=50>][download_appimage]
+**Fork di [Saber Notes](https://github.com/saber-notes/saber) con integrazioni Google Drive e supporto ai pulsanti della Redmi Smart Pen.**
 
-[English](https://github.com/saber-notes/saber/blob/main/README.md) |
-[čeština](https://github.com/saber-notes/saber/blob/main/README-cs.md) |
-[Deutsch](https://github.com/saber-notes/saber/blob/main/README-de.md) |
-[中文 (简体中文, 中国)](https://github.com/saber-notes/saber/blob/main/README-zh-CN.md) |
-[中文 (繁體, 台灣)](https://github.com/saber-notes/saber/blob/main/README-zh-TW.md) |
-[العربية](https://github.com/saber-notes/saber/blob/main/README-ar.md) |
-[Tiếng Việt](https://github.com/saber-notes/saber/blob/main/README-vi.md)
+Questo fork mantiene tutto il lavoro originale del progetto Saber e aggiunge funzionalità specifiche per l'uso con il **Redmi Pad 2** e la **Redmi Smart Pen**, oltre alla sincronizzazione con **Google Drive** al posto di Nextcloud.
 
-Saber is the notes app built for handwriting.
+---
 
-It's designed to be as simple and intuitive as possible, while still delivering unique features that you'll actually use. Additionally, Saber is available across all your devices, large and small, and syncs between them seamlessly.
+## Modifiche rispetto all'originale
 
-Notably, it can invert your notes when you're in dark mode. This allows you to write with white ink on a black background, which is much easier on the eyes in low-light environments like when the teacher turns off the lights in class.
-Images and PDFs are also inverted, so you can still use a digital printout or a textbook without the fuss.
+### 🖊️ Pulsanti Redmi Smart Pen
+I pulsanti laterali della Redmi Smart Pen vengono intercettati nativamente tramite `dispatchKeyEvent` in `MainActivity.kt`:
 
-Saber uses a dual-password system to protect your notes from anyone but you, even if they have complete control over the server. You can safely store your notes on the official Saber server, another server, or even host your own!
+| Pulsante | Azione |
+|---|---|
+| Pulsante 1 (PAGE_DOWN) | Toggle gomma — se già attiva, torna alla penna precedente |
+| Pulsante 2 (PAGE_UP) | Toggle selezione — se già attiva, torna alla penna precedente |
 
-The app is completely open-source so that anyone can view the source code and see exactly what it's doing and how it handles your data. Many other note-taking apps are closed-source and proprietary, meaning that their inner workings are a mystery to the public.
+### ☁️ Sincronizzazione Google Drive
+Sostituisce completamente il sistema di sync Nextcloud con Google Drive:
 
-As someone who studies maths, highlighting multi-line equations was always a hassle with other apps, where the highlighter would change color when it overlapped with itself. Another problem I had was that in some apps, the highlighter would render on top of the text, fading it out and making it hard to read.
-Saber's highlighter has no such issues. It utilizes canvas compositing to render the highlighter in a way that is consistent with/better than traditional paper, where it handles overlaps and maintains color consistency.
+- Autenticazione OAuth2 tramite browser (flusso installed-app, senza SHA1)
+- File salvati in `appDataFolder` — privati, accessibili solo dall'app
+- Upload automatico dopo ogni modifica (con debounce di 3 secondi)
+- Sync completo all'avvio se già autenticati
+- Nessun server intermedio — i dati restano nel tuo Google Drive
 
-Saber has everything you need to keep your notes organized. Create folders inside folders inside folders to your heart's content with no limit on the number of nested folders. And even though a note may be buried deep within a nested folder, you can still access it easily with your most recent notes always available on the home screen.
+---
 
-Discover a whole new way to capture and organize your thoughts with Saber. Whether you're a student, professional, or creative mind, Saber is your trusted companion for digital handwriting. Download now and let your ideas flow freely!
+## Prerequisiti
 
-[![Latest release](https://img.shields.io/github/v/release/saber-notes/saber)](https://github.com/saber-notes/saber/releases/latest)
-[![Flathub](https://img.shields.io/flathub/v/com.adilhanney.saber)](https://flathub.org/apps/details/com.adilhanney.saber)
-[![F-Droid](https://img.shields.io/f-droid/v/com.adilhanney.saber)](https://f-droid.org/en/packages/com.adilhanney.saber/)
-[![GitHub downloads](https://img.shields.io/github/downloads/saber-notes/saber/total?label=GitHub%20downloads)](https://github.com/saber-notes/saber/releases)
-[![Flathub downloads](https://img.shields.io/flathub/downloads/com.adilhanney.saber?label=Flathub%20downloads)](https://flathub.org/apps/details/com.adilhanney.saber)
-[![GitHub Sponsors](https://img.shields.io/github/sponsors/adil192)](https://github.com/sponsors/adil192)
-[![License](https://img.shields.io/github/license/saber-notes/saber)](https://github.com/saber-notes/saber/blob/main/LICENSE.md)
-[![Translation status](https://hosted.weblate.org/widget/saber-notes/saber/svg-badge.svg)](https://hosted.weblate.org/engage/saber-notes/)
-[![Codecov](https://codecov.io/gh/saber-notes/saber/branch/main/graph/badge.svg?token=EGQSN0THW2)](https://codecov.io/gh/saber-notes/saber)
+- Flutter SDK (stable) — vedi [flutter.dev](https://flutter.dev/docs/get-started/install)
+- Android SDK 36 con Build Tools 36.0.0
+- JDK 17
+- Un progetto Google Cloud con **Google Drive API** abilitata
+- Credenziali OAuth2 di tipo **Desktop app**
 
-<details open>
-<summary>Tap to show/hide screenshots</summary>
+---
 
-<div>
-<img src="https://github.com/saber-notes/saber/raw/main/metadata/en-US/images/phoneScreenshots/1_home.png" width="180">
-<img src="https://github.com/saber-notes/saber/raw/main/metadata/en-US/images/phoneScreenshots/2_editor.png" width="180">
-<img src="https://github.com/saber-notes/saber/raw/main/metadata/en-US/images/phoneScreenshots/3_login.png" width="180">
-<img src="https://github.com/saber-notes/saber/raw/main/metadata/en-US/images/phoneScreenshots/4_settings.png" width="180">
-</div>
-</details>
+## Setup ambiente (macOS)
 
-## Features
+```bash
+# Flutter e Android SDK tramite Homebrew
+brew install flutter --cask android-commandlinetools openjdk@17
 
-Please see [#1 Saber progress][progress].
+# Aggiungi al PATH (~/.zshrc)
+export ANDROID_HOME="/opt/homebrew/share/android-commandlinetools"
+export PATH="$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/platform-tools:$PATH"
+export PATH="/opt/homebrew/opt/openjdk@17/bin:$PATH"
 
-## Install
+# Installa SDK Android
+sdkmanager --install "platform-tools" "platforms;android-36" "build-tools;36.0.0"
+flutter doctor --android-licenses
+```
 
-Please see
-[Install Saber](https://github.com/saber-notes/saber/wiki/install)
-on the wiki.
+---
 
-## Build from source
+## Setup Google Cloud
 
-Please see
-[Build Saber](https://github.com/saber-notes/saber/wiki/build)
-on the wiki.
+1. Crea un progetto su [console.cloud.google.com](https://console.cloud.google.com)
+2. Abilita **Google Drive API**
+3. Configura la **OAuth consent screen** (External)
+4. Crea credenziali **OAuth 2.0 → Desktop app**
+5. Salva Client ID e Client Secret in un file `.env` locale:
 
-## Links
+```bash
+# .env (non committare questo file)
+GOOGLE_CLIENT_ID=il_tuo_client_id.apps.googleusercontent.com
+GOOGLE_CLIENT_SECRET=il_tuo_client_secret
+```
 
-- [Nextcloud server][nextcloud]
-- [Privacy policy][privacy]
-- [License][license]
-- [Releases][releases]
+---
 
-## Translating
+## Build e Run
 
-All translations are thanks to our community of contributors.
+```bash
+# Installa le dipendenze
+flutter pub get
 
-If you'd like to help out translating Saber, head to [Weblate](https://hosted.weblate.org/engage/saber-notes/)!
+# Avvia in debug sul dispositivo connesso
+flutter run \
+  --dart-define=GOOGLE_CLIENT_ID=$(grep GOOGLE_CLIENT_ID .env | cut -d= -f2) \
+  --dart-define=GOOGLE_CLIENT_SECRET=$(grep GOOGLE_CLIENT_SECRET .env | cut -d= -f2)
 
-[![Translation status](https://hosted.weblate.org/widget/saber-notes/multi-auto.svg)](https://hosted.weblate.org/engage/saber-notes/)
+# Build APK release
+flutter build apk --release \
+  --dart-define=GOOGLE_CLIENT_ID=$(grep GOOGLE_CLIENT_ID .env | cut -d= -f2) \
+  --dart-define=GOOGLE_CLIENT_SECRET=$(grep GOOGLE_CLIENT_SECRET .env | cut -d= -f2)
+```
 
-## Supporting Saber
+---
 
-If you like Saber, please consider supporting it by:
-- Spreading the word!
-- Starring the project on GitHub
-- Sponsoring me on [GitHub Sponsors](https://github.com/sponsors/adil192)
-- Donating via [PayPal](https://paypal.me/adilhanney)
-- Buying more storage on the Nextcloud server: see [Pricing](pricing.md)
+## Connessione dispositivo Android (debug USB)
 
-## Development notes
+1. **Impostazioni → Info sul dispositivo** → tocca "Versione MIUI" 7 volte
+2. **Impostazioni → Impostazioni aggiuntive → Opzioni sviluppatore**:
+   - Attiva **Debug USB**
+   - Attiva **Installa tramite USB**
+3. Collega il dispositivo e autorizza il debug sul popup
+4. Verifica la connessione: `adb devices`
 
-Please see
-[Maintainer notes](https://github.com/saber-notes/saber/wiki/Maintainer-notes)
-on the wiki.
+---
 
+## Struttura delle modifiche
 
-[f-droid]: https://f-droid.org/packages/com.adilhanney.saber/
-[flathub]: https://flathub.org/apps/details/com.adilhanney.saber
-[google_play]: https://play.google.com/store/apps/details?id=com.adilhanney.saber
-[snap]: https://snapcraft.io/saber
-[app_store]: https://apps.apple.com/us/app/saber/id1671523739
-[download_windows]: https://github.com/saber-notes/saber/releases/download/v1.33.2/SaberInstaller_v1.33.2.exe
-[download_appimage]: https://github.com/saber-notes/saber/releases/download/v1.33.2/Saber-1.33.2-x86_64.AppImage
+```
+android/app/src/main/kotlin/com/adilhanney/saber/
+└── MainActivity.kt              # Intercetta KeyEvent per i pulsanti Smart Pen
 
-[nextcloud]: https://nc.saber.adil.hanney.org/
+lib/
+├── data/
+│   └── googledrive/
+│       ├── drive_client.dart    # Autenticazione OAuth2 Google
+│       └── drive_syncer.dart    # Upload/download file su Drive
+├── pages/
+│   ├── user/
+│   │   └── drive_login.dart     # Pagina di login Google Drive
+│   └── editor/
+│       └── editor.dart          # Modificato: gestione pulsanti Smart Pen
+└── data/
+    ├── prefs.dart               # Aggiunto: preferenze Drive
+    ├── file_manager/
+    │   └── file_manager.dart    # Aggiunto: enqueue upload Drive
+    └── main.dart                # Aggiunto: sync Drive all'avvio
+```
 
-[privacy]: https://github.com/saber-notes/saber/blob/main/privacy_policy.md
-[license]: https://github.com/saber-notes/saber/blob/main/LICENSE.md
+---
 
-[releases]: https://github.com/saber-notes/saber/releases
-[issues]: https://github.com/saber-notes/saber/issues
-[progress]: https://github.com/saber-notes/saber/discussions/1
+## Come funziona il sync
 
-[f-droid-manifest]: https://gitlab.com/fdroid/fdroiddata/-/blob/master/metadata/com.adilhanney.saber.yml
+```
+App scrive nota
+      │
+      ▼
+FileManager.writeFile()
+      │
+      ▼
+DriveUploadQueue.enqueue()   ← debounce 3 secondi
+      │
+      ▼
+DriveSyncer.uploadFile()
+      │
+      ▼
+Google Drive (appDataFolder)
+      │
+      ▼
+Webapp (notes.tuodominio.com)
+```
+
+---
+
+## Webapp compagna
+
+Le note sincronizzate su Drive sono visualizzabili via browser tramite **[Saber Web](https://github.com/Ken5998/saber-web)** — una webapp Next.js che si autentica con lo stesso account Google e renderizza i tratti a mano su canvas.
+
+---
+
+## Roadmap
+
+- [ ] Sync bidirezionale migliorato (conflict resolution)
+- [ ] Indicatore di sync nella UI (icona cloud)
+- [ ] Supporto multi-account
+- [ ] Notifica quando una nota è stata aggiornata da un altro dispositivo
+
+---
+
+## Crediti
+
+Questo progetto è un fork di [Saber Notes](https://github.com/saber-notes/saber) di [@adilhanney](https://github.com/adilhanney).  
+Tutto il lavoro originale appartiene ai rispettivi autori.
+
+---
+
+## Licenza
+
+**GPL-3.0** — in conformità con il progetto originale.  
+Vedi [LICENSE](LICENSE) per i dettagli.
